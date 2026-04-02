@@ -1,3 +1,5 @@
+const CLAUDE_API_KEY = import.meta.env.VITE_CLAUDE_KEY;
+
 const messagesEl = document.getElementById("messages");
 const chatInput = document.getElementById("chatInput");
 const sendBtn = document.getElementById("sendBtn");
@@ -7,8 +9,6 @@ const clearBtn = document.getElementById("clearBtn");
 const statusText = document.getElementById("statusText");
 const echoModeBtn = document.getElementById("echoModeBtn");
 const llmModeBtn = document.getElementById("llmModeBtn");
-const apikeyBar = document.getElementById("apikeyBar");
-const apiKeyInput = document.getElementById("apiKeyInput");
 const chatTitle = document.getElementById("chatTitle");
 const chatSub = document.getElementById("chatSub");
 
@@ -21,9 +21,9 @@ let conversationHistory = [];
 let pendingSpeak = null;
 
 const sitepalVoiceSettings = {
-  voice: 3,
+  voice: 2,
   language: 1,
-  engine: 3
+  engine: 2
 };
 
 // Voice: Tom (US) — Voice ID: 3, Language ID: 1, Engine ID: 3
@@ -117,18 +117,16 @@ function setMode(mode) {
   if (mode === "echo") {
     echoModeBtn.classList.add("active");
     llmModeBtn.classList.remove("active");
-    apikeyBar.classList.remove("visible");
     chatTitle.textContent = "Echo Chat";
     chatSub.textContent = "Avatar repeats what you say";
     conversationHistory = [];
   } else {
     llmModeBtn.classList.add("active");
     echoModeBtn.classList.remove("active");
-    apikeyBar.classList.add("visible");
     chatTitle.textContent = "LLM Chat";
     chatSub.textContent = "Powered by Claude";
     conversationHistory = [];
-    addAndSave("system", "LLM mode on. Enter your Claude API key above, then start chatting.");
+    addAndSave("system", "LLM mode on. Start chatting.");
   }
 }
 
@@ -137,11 +135,7 @@ llmModeBtn.addEventListener("click", function () { setMode("llm"); });
 
 // ── Claude API call ──
 async function callClaude(userMessage) {
-  const apiKey = apiKeyInput.value.trim();
-  if (!apiKey) {
-    addAndSave("system", "Enter your Claude API key in the bar above.");
-    return null;
-  }
+  const apiKey = CLAUDE_API_KEY;
 
   conversationHistory.push({ role: "user", content: userMessage });
 
@@ -157,7 +151,7 @@ async function callClaude(userMessage) {
       body: JSON.stringify({
         model: "claude-opus-4-6",
         max_tokens: 1024,
-        system: "You are a helpful AI assistant speaking through an avatar. Keep responses concise and conversational.",
+        system: "You are a helpful AI assistant speaking through an avatar. Keep responses concise and conversational. Do not use emojis.",
         messages: conversationHistory
       })
     });
@@ -187,15 +181,15 @@ async function handleSend() {
   chatInput.focus();
 
   if (currentMode === "echo") {
-    addAndSave("user", "You: " + text);
-    addAndSave("avatar", "Avatar: " + text);
+    addAndSave("user", text);
+    addAndSave("avatar", text);
     speakWithSitePal(text);
   } else {
-    addAndSave("user", "You: " + text);
+    addAndSave("user", text);
     setStatus("Claude is thinking…");
     const reply = await callClaude(text);
     if (reply) {
-      addAndSave("avatar", "Claude: " + reply);
+      addAndSave("avatar", reply);
       speakWithSitePal(reply);
     } else {
       setStatus("Avatar ready", true);
