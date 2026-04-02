@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SitePal Avatar Chat</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page">
+
+    <!-- Left: Avatar panel -->
+    <section class="panel">
+      <div class="panel-header">Avatar</div>
+      <div class="avatar-wrap">
+        <div id="sitepal-container">
+          <script
+            type="text/javascript"
+            src="//vhss-d.oddcast.com/vhost_embed_functions_v4.php?acc=8412077&js=0">
+          </script>
+          <script type="text/javascript">
+            AC_VHost_Embed(
+              8412077,
+              380,
+              340,
+              "",
+              1,
+              1,
+              2774772,
+              0,
+              1,
+              0,
+              "L8PVdb3MQ9Kg1YElNguaEr3s5CH9AJC6",
+              0,
+              0
+            );
+          </script>
+        </div>
+
+        <div class="status" id="statusText"></div>
+      </div>
+    </section>
+
+    <!-- Right: Chat panel -->
+    <section class="chat-panel">
+      <div class="chat-header">
+        <div class="avatar-dot">🤖</div>
+        <div class="chat-header-info">
+          <div class="chat-header-title" id="chatTitle">Echo Chat</div>
+          <div class="chat-header-sub" id="chatSub">Avatar repeats what you say</div>
+        </div>
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="echoModeBtn" type="button">Echo</button>
+          <button class="mode-btn" id="llmModeBtn" type="button">LLM</button>
+        </div>
+      </div>
+
+      <!-- API key bar — only visible in LLM mode -->
+      <div class="apikey-bar" id="apikeyBar">
+        <span class="apikey-label">Claude API Key</span>
+        <input
+          id="apiKeyInput"
+          type="password"
+          placeholder="sk-ant-…"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="messages" id="messages"></div>
+
+      <div class="composer">
+        <input
+          id="chatInput"
+          type="text"
+          placeholder="Type a message…"
+        />
+        <button id="sendBtn">Send</button>
+        <button id="micBtn">🎤 Mic</button>
+        <button id="stopBtn">⏹ Stop</button>
+        <button id="clearBtn">Clear</button>
+      </div>
+    </section>
+
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
