@@ -1,4 +1,5 @@
 const CLAUDE_API_KEY = import.meta.env.VITE_CLAUDE_KEY;
+const DEEPGRAM_API_KEY = import.meta.env.VITE_DEEPGRAM_KEY;
 
 const messagesEl = document.getElementById("messages");
 const chatInput = document.getElementById("chatInput");
@@ -11,11 +12,17 @@ const echoModeBtn = document.getElementById("echoModeBtn");
 const llmModeBtn = document.getElementById("llmModeBtn");
 const chatTitle = document.getElementById("chatTitle");
 const chatSub = document.getElementById("chatSub");
+const dgModeBtn = document.getElementById("dgModeBtn");
+const webModeBtn = document.getElementById("webModeBtn");
 
 let sitepalReady = false;
 let isSpeaking = false;
-let recognition = null;
 let isListening = false;
+let dgSocket = null;
+let mediaStream = null;
+let mediaRecorder = null;
+let webRecognition = null;
+let micMode = "deepgram";
 let currentMode = "echo";
 let conversationHistory = [];
 let pendingSpeak = null;
@@ -229,61 +236,102 @@ stopBtn.addEventListener("click", function () {
   }
 });
 
-function setupSpeechRecognition() {
-  const SpeechRecognition =
-    window.SpeechRecognition || /** @type {any} */ (window).webkitSpeechRecognition;
-
-  if (!SpeechRecognition) {
-    micBtn.disabled = true;
-    micBtn.textContent = "No Mic";
-    addAndSave("system", "Browser speech recognition is not available here.");
+async function startDeepgram() {
+  if (!DEEPGRAM_API_KEY || DEEPGRAM_API_KEY === "paste-your-deepgram-key-here") {
+    addAndSave("system", "Add your Deepgram API key to .env as VITE_DEEPGRAM_KEY.");
     return;
   }
 
-  recognition = new SpeechRecognition();
-  recognition.lang = "en-US";
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (err) {
+    addAndSave("system", "Mic access denied: " + err.message);
+    return;
+  }
 
-  recognition.onstart = function () {
+  const url = "wss://api.deepgram.com/v1/listen?language=en&punctuate=true&interim_results=false";
+  dgSocket = new WebSocket(url, ["token", DEEPGRAM_API_KEY]);
+
+  dgSocket.onopen = function () {
+    console.log("[Deepgram] WebSocket connected");
     isListening = true;
     micBtn.textContent = "Listening";
-    setStatus("listening");
+    setStatus("Listening", true);
+
+    mediaRecorder = new MediaRecorder(mediaStream, { mimeType: "audio/webm" });
+    mediaRecorder.ondataavailable = function (e) {
+      if (e.data.size > 0 && dgSocket && dgSocket.readyState === WebSocket.OPEN) {
+        dgSocket.send(e.data);
+      }
+    };
+    mediaRecorder.start(250);
   };
 
-  recognition.onend = function () {
-    isListening = false;
-    micBtn.textContent = "Mic";
-
-    if (!isSpeaking) {
-      setStatus("idle");
+  dgSocket.onmessage = function (event) {
+    const data = JSON.parse(event.data);
+    const transcript = data?.channel?.alternatives?.[0]?.transcript;
+    if (transcript) console.log("[Deepgram] transcript:", transcript);
+    if (transcript && transcript.trim()) {
+      chatInput.value = transcript.trim();
+      stopDeepgram();
+      handleSend();
     }
   };
 
-  recognition.onerror = function (event) {
-    addAndSave("system", "Mic error: " + event.error);
-    isListening = false;
-    micBtn.textContent = "Mic";
-    setStatus("mic error");
+  dgSocket.onerror = function () {
+    addAndSave("system", "Deepgram connection error.");
+    stopDeepgram();
   };
 
-  recognition.onresult = function (event) {
-    const transcript = event.results[0][0].transcript;
-    chatInput.value = transcript;
-    handleSend();
+  dgSocket.onclose = function () {
+    isListening = false;
+    micBtn.textContent = "Mic";
+    if (!isSpeaking) setStatus("Avatar ready", true);
   };
 }
 
-micBtn.addEventListener("click", function () {
-  if (!recognition) {
-    addAndSave("system", "Speech recognition is not configured in this browser.");
-    return;
-  }
+function stopDeepgram() {
+  if (mediaRecorder && mediaRecorder.state !== "inactive") { mediaRecorder.stop(); mediaRecorder = null; }
+  if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+  if (dgSocket && dgSocket.readyState === WebSocket.OPEN) dgSocket.close();
+  isListening = false;
+  micBtn.textContent = "Mic";
+}
 
-  if (isListening) {
-    recognition.stop();
+function setupWebSpeech() {
+  const SR = /** @type {any} */ (window).SpeechRecognition || /** @type {any} */ (window).webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.lang = "en-US";
+  r.interimResults = false;
+  r.maxAlternatives = 1;
+  r.onstart = function () { isListening = true; micBtn.textContent = "Listening"; setStatus("Listening", true); };
+  r.onend = function () { isListening = false; micBtn.textContent = "Mic"; if (!isSpeaking) setStatus("Avatar ready", true); };
+  r.onerror = function (e) { addAndSave("system", "Mic error: " + e.error); isListening = false; micBtn.textContent = "Mic"; };
+  r.onresult = function (e) { chatInput.value = e.results[0][0].transcript; handleSend(); };
+  return r;
+}
+
+webRecognition = setupWebSpeech();
+
+dgModeBtn.addEventListener("click", function () {
+  micMode = "deepgram";
+  dgModeBtn.classList.add("active");
+  webModeBtn.classList.remove("active");
+});
+
+webModeBtn.addEventListener("click", function () {
+  micMode = "web";
+  webModeBtn.classList.add("active");
+  dgModeBtn.classList.remove("active");
+});
+
+micBtn.addEventListener("click", function () {
+  if (micMode === "deepgram") {
+    if (isListening) { stopDeepgram(); } else { startDeepgram(); }
   } else {
-    recognition.start();
+    if (!webRecognition) { addAndSave("system", "Web Speech not supported in this browser."); return; }
+    if (isListening) { webRecognition.stop(); } else { webRecognition.start(); }
   }
 });
 
@@ -317,4 +365,3 @@ window.vh_audioError = function () {
 };
 
 restoreTranscript();
-setupSpeechRecognition();

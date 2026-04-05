@@ -49,9 +49,15 @@
           <div class="chat-header-title" id="chatTitle">Echo Chat</div>
           <div class="chat-header-sub" id="chatSub">Avatar repeats what you say</div>
         </div>
-        <div class="mode-toggle">
-          <button class="mode-btn active" id="echoModeBtn" type="button">Echo</button>
-          <button class="mode-btn" id="llmModeBtn" type="button">LLM</button>
+        <div class="header-controls">
+          <div class="mode-toggle">
+            <button class="mode-btn active" id="echoModeBtn" type="button">Echo</button>
+            <button class="mode-btn" id="llmModeBtn" type="button">LLM</button>
+          </div>
+          <div class="mode-toggle">
+            <button class="mode-btn active" id="dgModeBtn" type="button">Deepgram</button>
+            <button class="mode-btn" id="webModeBtn" type="button">Web</button>
+          </div>
         </div>
       </div>
 
@@ -65,7 +71,7 @@
           placeholder="Type a message…"
         />
         <button id="sendBtn">Send</button>
-        <button id="micBtn">🎤 Mic</button>
+        <button id="micBtn" type="button">Mic</button>
         <button id="stopBtn">⏹ Stop</button>
         <button id="clearBtn">Clear</button>
       </div>

@@ -363,6 +363,12 @@ button:disabled {
   padding: 0 22px;
 }
 
+.header-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 #micBtn {
   background: #1e1e30;
   color: #a78bfa;
