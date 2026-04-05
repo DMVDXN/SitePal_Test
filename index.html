@@ -11,32 +11,16 @@
 
     <!-- Left: Avatar panel -->
     <section class="panel">
-      <div class="panel-header">Avatar</div>
-      <div class="avatar-wrap">
-        <div id="sitepal-container">
-          <script
-            type="text/javascript"
-            src="//vhss-d.oddcast.com/vhost_embed_functions_v4.php?acc=8412077&js=0">
-          </script>
-          <script type="text/javascript">
-            AC_VHost_Embed(
-              8412077,
-              380,
-              340,
-              "",
-              1,
-              1,
-              2774772,
-              0,
-              1,
-              0,
-              "L8PVdb3MQ9Kg1YElNguaEr3s5CH9AJC6",
-              0,
-              0
-            );
-          </script>
+      <div class="panel-header">
+        <span>Avatar</span>
+        <div class="char-switcher">
+          <button class="char-btn active" id="charBtn0" type="button">Character 1</button>
+          <button class="char-btn" id="charBtn1" type="button">Character 2</button>
         </div>
-
+      </div>
+      <div class="avatar-wrap">
+        <script type="text/javascript" src="//vhss-d.oddcast.com/vhost_embed_functions_v4.php?acc=8412077&js=0"></script>
+        <div id="sitepal-container"></div>
         <div class="status" id="statusText"></div>
       </div>
     </section>
