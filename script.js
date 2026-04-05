@@ -19,18 +19,62 @@ let isListening = false;
 let currentMode = "echo";
 let conversationHistory = [];
 let pendingSpeak = null;
+let currentCharacterIndex = 0;
 
-const sitepalVoiceSettings = {
-  voice: 2,
-  language: 1,
-  engine: 2
-};
-
-// Voice: Tom (US) — Voice ID: 3, Language ID: 1, Engine ID: 3
+const characters = [
+  {
+    name: "Character 1",
+    sceneId: 2774772,
+    hash: "L8PVdb3MQ9Kg1YElNguaEr3s5CH9AJC6",
+    width: 380,
+    height: 340,
+    // Tom (US Male) — adjust voice/engine IDs to match your SitePal account
+    voice: { id: 3, language: 1, engine: 3 },
+    systemPrompt: "You are Alex, a friendly and laid-back male assistant. You speak casually and keep things simple. You enjoy cracking the occasional light joke. Never use emojis. Keep responses short and conversational.",
+  },
+  {
+    name: "Character 2",
+    sceneId: 2774778,
+    hash: "fBZ3peH3vZSEUNKujwuceAq7AIDzzXuU",
+    width: 380,
+    height: 340,
+    // Female voice — adjust voice/engine IDs to match your SitePal account
+    voice: { id: 1, language: 1, engine: 2 },
+    systemPrompt: "You are Sophia, a sharp and professional female assistant. You are articulate, precise, and thoughtful. You give well-structured answers but keep them concise. Never use emojis.",
+  }
+];
 
 function setStatus(text, active) {
   statusText.textContent = text;
   statusText.classList.toggle("active", !!active);
+}
+
+function loadCharacter(index) {
+  if (index === currentCharacterIndex && sitepalReady) return;
+
+  currentCharacterIndex = index;
+  sitepalReady = false;
+  isSpeaking = false;
+  pendingSpeak = null;
+
+  document.querySelectorAll(".char-btn").forEach(function (btn, i) {
+    btn.classList.toggle("active", i === index);
+  });
+
+  conversationHistory = [];
+
+  const char = characters[index];
+  const container = document.getElementById("sitepal-container");
+  container.innerHTML = "";
+
+  setStatus("Loading " + char.name + "…");
+
+  const script = document.createElement("script");
+  script.type = "text/javascript";
+  script.text = "AC_VHost_Embed(" +
+    "8412077," + char.width + "," + char.height + ',"",1,1,' +
+    char.sceneId + ',0,1,0,"' + char.hash + '",0,0);';
+  container.appendChild(script);
 }
 
 function formatTime() {
@@ -96,15 +140,12 @@ function speakWithSitePal(text) {
 
   if (!speakFunction) return;
 
+  const { id, language, engine } = characters[currentCharacterIndex].voice;
+
   try {
     isSpeaking = true;
     setStatus("Speaking…", true);
-    speakFunction(
-      text,
-      sitepalVoiceSettings.voice,
-      sitepalVoiceSettings.language,
-      sitepalVoiceSettings.engine
-    );
+    speakFunction(text, id, language, engine);
   } catch (error) {
     isSpeaking = false;
     setStatus("Avatar ready", true);
@@ -151,7 +192,7 @@ async function callClaude(userMessage) {
       body: JSON.stringify({
         model: "claude-opus-4-6",
         max_tokens: 1024,
-        system: "You are a helpful AI assistant speaking through an avatar. Keep responses concise and conversational. Do not use emojis.",
+        system: characters[currentCharacterIndex].systemPrompt,
         messages: conversationHistory
       })
     });
@@ -316,5 +357,10 @@ window.vh_audioError = function () {
   }
 };
 
+document.querySelectorAll(".char-btn").forEach(function (btn, index) {
+  btn.addEventListener("click", function () { loadCharacter(index); });
+});
+
 restoreTranscript();
 setupSpeechRecognition();
+loadCharacter(0);

@@ -29,14 +29,46 @@ body {
 }
 
 .panel-header {
-  padding: 20px 24px;
+  padding: 14px 24px;
   border-bottom: 1px solid #1e1e30;
-  font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.3px;
   color: #94a3b8;
   text-transform: uppercase;
   font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.char-switcher {
+  display: flex;
+  gap: 4px;
+  background: #0a0a0f;
+  border: 1px solid #1e1e30;
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.char-btn {
+  min-height: 26px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 7px;
+  background: transparent;
+  color: #475569;
+  border: none;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.char-btn.active {
+  background: #4f46e5;
+  color: #fff;
 }
 
 .avatar-wrap {
